@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gnanasridhar@root: ~</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100..800&family=Bebas+Neue&family=Oxanium:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#060a08;
+    --bg-panel:#0a120e;
+    --green:#39ff9f;
+    --green-dim:#1a5c3f;
+    --cyan:#4fe3ff;
+    --amber:#ffb454;
+    --text:#c8e6d4;
+    --text-dim:#5f7a6c;
+    --line:#153327;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  ::selection{background:var(--green); color:#04140b;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'JetBrains Mono', monospace;
+    font-size:15px;
+    line-height:1.6;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  /* scanline / crt overlay */
+  body::before{
+    content:'';
+    position:fixed; inset:0;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(57,255,159,0.025) 0px,
+      rgba(57,255,159,0.025) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events:none;
+    z-index:9999;
+    mix-blend-mode:overlay;
+  }
+  body::after{
+    content:'';
+    position:fixed; inset:0;
+    background:radial-gradient(ellipse at 50% 0%, rgba(57,255,159,0.05), transparent 60%);
+    pointer-events:none;
+    z-index:9998;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+
+  a{color:var(--cyan); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  a:focus-visible, button:focus-visible{outline:2px solid var(--amber); outline-offset:3px;}
+
+  .wrap{max-width:920px; margin:0 auto; padding:0 24px;}
+
+  /* ---------- boot sequence ---------- */
+  #boot{
+    position:fixed; inset:0; background:#040705; color:var(--green);
+    z-index:99999; padding:40px 24px; font-size:14px;
+    display:flex; flex-direction:column;
+  }
+  #boot .line{opacity:0; white-space:pre-wrap;}
+  #boot .cursor-line{display:inline-block; width:8px; height:14px; background:var(--green); animation:blink 1s steps(1) infinite; vertical-align:middle;}
+  #boot.done{display:none;}
+
+  @keyframes blink{50%{opacity:0;}}
+  @keyframes fadeIn{to{opacity:1;}}
+
+  /* ---------- top bar (window chrome) ---------- */
+  .titlebar{
+    position:sticky; top:0; z-index:500;
+    background:rgba(6,10,8,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+  }
+  .titlebar-inner{
+    max-width:920px; margin:0 auto; padding:10px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .dots{display:flex; gap:7px;}
+  .dot{width:11px; height:11px; border-radius:50%;}
+  .dot.r{background:#ff5f56;} .dot.y{background:#ffbd2e;} .dot.g{background:#27c93f;}
+  .titlebar .path{color:var(--text-dim); font-size:13px;}
+  .nav{display:flex; gap:18px; font-size:13px;}
+  .nav a{color:var(--text-dim);}
+  .nav a:hover{color:var(--green); text-decoration:none;}
+
+  /* ---------- section shell ---------- */
+  section{padding:64px 0; border-bottom:1px dashed var(--line);}
+  .prompt{
+    color:var(--text-dim); font-size:13px; margin-bottom:10px;
+  }
+  .prompt .user{color:var(--green);}
+  .prompt .at{color:var(--text-dim);}
+  .prompt .host{color:var(--cyan);}
+  .prompt .cmd{color:var(--text);}
+
+  h1,h2,h3{font-family:'Bebas Neue', sans-serif; letter-spacing:1px; font-weight:400;}
+  .eyebrow{
+    font-family:'Oxanium', sans-serif; font-weight:700;
+    color:var(--amber); font-size:12px; letter-spacing:3px; text-transform:uppercase;
+  }
+
+  /* ---------- hero ---------- */
+  #hero{padding-top:56px; padding-bottom:72px;}
+  .hero-name{
+    font-size:clamp(46px, 9vw, 92px);
+    line-height:0.95;
+    color:var(--green);
+    text-shadow:0 0 18px rgba(57,255,159,0.35);
+  }
+  .hero-role{
+    font-family:'Oxanium', sans-serif; font-weight:600;
+    color:var(--cyan); font-size:clamp(15px,2.2vw,20px);
+    margin-top:8px; letter-spacing:0.5px;
+  }
+  .type-cursor{display:inline-block; width:10px; height:1em; background:var(--amber); vertical-align:-2px; animation:blink 1s steps(1) infinite;}
+  .hero-desc{max-width:640px; margin-top:22px; color:var(--text-dim);}
+  .hero-links{margin-top:28px; display:flex; flex-wrap:wrap; gap:14px;}
+  .btn{
+    font-family:'JetBrains Mono', monospace; font-size:13px;
+    color:var(--green); border:1px solid var(--green-dim);
+    padding:10px 16px; background:rgba(57,255,159,0.04);
+    transition:all .15s ease;
+  }
+  .btn:hover{background:rgba(57,255,159,0.12); border-color:var(--green); text-decoration:none; box-shadow:0 0 14px rgba(57,255,159,0.25);}
+  .btn.amber{color:var(--amber); border-color:#6b4a1e;}
+  .btn.amber:hover{background:rgba(255,180,84,0.1); border-color:var(--amber); box-shadow:0 0 14px rgba(255,180,84,0.25);}
+  .btn.cyan{color:var(--cyan); border-color:#1e5566;}
+  .btn.cyan:hover{background:rgba(79,227,255,0.1); border-color:var(--cyan); box-shadow:0 0 14px rgba(79,227,255,0.25);}
+
+  .status-bar{
+    margin-top:36px; display:flex; gap:24px; flex-wrap:wrap;
+    font-size:12px; color:var(--text-dim);
+  }
+  .status-bar span b{color:var(--green);}
+
+  /* ---------- section headers ---------- */
+  .sec-title{font-size:clamp(30px,5vw,44px); color:var(--text); margin:6px 0 28px;}
+  .sec-title .brk{color:var(--green);}
+
+  /* ---------- skills ---------- */
+  .skills-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px,1fr)); gap:18px;}
+  .skill-card{
+    border:1px solid var(--line); padding:16px 18px; background:var(--bg-panel);
+  }
+  .skill-card .head{font-family:'Oxanium',sans-serif; font-weight:700; color:var(--amber); font-size:12px; letter-spacing:2px; text-transform:uppercase; margin-bottom:10px;}
+  .skill-card ul{list-style:none;}
+  .skill-card li{color:var(--text); font-size:14px; padding:3px 0; position:relative; padding-left:16px;}
+  .skill-card li::before{content:'>'; position:absolute; left:0; color:var(--green);}
+
+  /* ---------- experience ---------- */
+  .exp-item{display:grid; grid-template-columns:26px 1fr; gap:14px; margin-bottom:30px;}
+  .exp-marker{position:relative;}
+  .exp-marker .node{width:11px; height:11px; border:2px solid var(--green); background:var(--bg); margin-top:4px;}
+  .exp-marker .stem{position:absolute; top:16px; bottom:-34px; left:4px; width:1px; background:var(--line);}
+  .exp-item:last-child .stem{display:none;}
+  .exp-role{font-family:'Oxanium',sans-serif; font-weight:700; color:var(--text); font-size:16px;}
+  .exp-tag{color:var(--cyan); font-size:12px; margin-left:8px;}
+  .exp-item ul{list-style:none; margin-top:8px;}
+  .exp-item li{color:var(--text-dim); font-size:14px; padding:2px 0; position:relative; padding-left:18px;}
+  .exp-item li::before{content:'$'; position:absolute; left:0; color:var(--amber);}
+
+  /* ---------- projects ---------- */
+  .proj{
+    border:1px solid var(--line); background:var(--bg-panel);
+    padding:22px 24px; margin-bottom:22px; position:relative;
+  }
+  .proj::before{
+    content:'PROC'; position:absolute; top:-1px; right:0;
+    font-family:'Oxanium',sans-serif; font-size:10px; letter-spacing:2px;
+    color:#04140b; background:var(--green); padding:3px 8px;
+  }
+  .proj-title{font-family:'Oxanium',sans-serif; font-weight:700; color:var(--green); font-size:19px; margin-bottom:4px; padding-right:70px;}
+  .proj-stack{color:var(--cyan); font-size:12px; margin-bottom:12px;}
+  .proj ul{list-style:none;}
+  .proj li{color:var(--text-dim); font-size:14px; padding:3px 0 3px 18px; position:relative;}
+  .proj li::before{content:'#'; position:absolute; left:0; color:var(--amber);}
+
+  /* ---------- terminal contact ---------- */
+  .term{
+    border:1px solid var(--line); background:#040806;
+    box-shadow:0 0 40px rgba(57,255,159,0.06);
+  }
+  .term-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:9px 14px; border-bottom:1px solid var(--line); background:var(--bg-panel);
+  }
+  .term-body{padding:22px 24px; font-size:14px;}
+  .term-body .row{margin-bottom:10px;}
+  .term-body .k{color:var(--text-dim);}
+  .term-body .v{color:var(--green);}
+  #liveclock{color:var(--amber);}
+
+  footer{padding:32px 0 48px; text-align:center; color:var(--text-dim); font-size:12px;}
+  footer .blink-cursor{animation:blink 1s steps(1) infinite;}
+
+  @media (max-width:600px){
+    .nav{display:none;}
+    section{padding:48px 0;}
+  }
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div class="line" style="animation-delay:.05s">BIOS v2.7 — INITIALIZING PERSONAL RUNTIME...</div>
+  <div class="line" style="animation-delay:.35s">loading kernel modules: [dsa] [networking] [dbms] [ml] .... OK</div>
+  <div class="line" style="animation-delay:.65s">mounting /home/gnanasridhar ...</div>
+  <div class="line" style="animation-delay:.95s">authenticating user: gnanasridhar27 ... ACCESS GRANTED</div>
+  <div class="line" style="animation-delay:1.3s">$ ./launch_portfolio.sh<span class="cursor-line"></span></div>
+</div>
+
+<div class="titlebar">
+  <div class="titlebar-inner">
+    <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+    <div class="path">gnanasridhar@root: ~/portfolio</div>
+    <nav class="nav">
+      <a href="#about">about</a>
+      <a href="#skills">skills</a>
+      <a href="#experience">experience</a>
+      <a href="#projects">projects</a>
+      <a href="#contact">contact</a>
+    </nav>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <section id="hero">
+    <div class="prompt"><span class="user">guest</span><span class="at">@</span><span class="host">portfolio</span><span class="cmd">:~$ whoami</span></div>
+    <h1 class="hero-name">GNANASRIDHAR&nbsp;N</h1>
+    <div class="hero-role"><span id="typed"></span><span class="type-cursor"></span></div>
+    <p class="hero-desc">Computer Science Engineering student building across software development, data science and networking — currently compiling knowledge at Muthayammal Engineering College, expected graduation May 2028.</p>
+    <div class="hero-links">
+      <a class="btn" href="mailto:gnanasridharcse@gmail.com">./contact.sh</a>
+      <a class="btn cyan" href="https://github.com/Gnanasridhar27" target="_blank" rel="noopener">git clone github</a>
+      <a class="btn amber" href="https://www.linkedin.com/in/gnanasridhar-n" target="_blank" rel="noopener">linkedin --connect</a>
+    </div>
+    <div class="status-bar">
+      <span>STATUS: <b>OPEN_TO_OPPORTUNITIES</b></span>
+      <span>LOCATION: <b>Tamil Nadu, IN</b></span>
+      <span>UPTIME: <b id="uptime">00:00:00</b></span>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="prompt"><span class="user">gnanasridhar</span><span class="at">@</span><span class="host">root</span><span class="cmd">:~$ cat objective.txt</span></div>
+    <h2 class="sec-title">obj<span class="brk">/</span>ective</h2>
+    <p style="max-width:680px; color:var(--text);">Motivated Computer Science Engineering student seeking an entry-level IT opportunity to apply skills in software development, data science, and networking — gaining practical experience while contributing to organizational success.</p>
+    <div class="skills-grid" style="margin-top:26px;">
+      <div class="skill-card">
+        <div class="head">education</div>
+        <ul>
+          <li>B.E. Computer Science &amp; Engineering</li>
+          <li>Muthayammal Engineering College</li>
+          <li>2nd Year — Grad. May 2028</li>
+        </ul>
+      </div>
+      <div class="skill-card">
+        <div class="head">languages spoken</div>
+        <ul>
+          <li>English</li>
+          <li>Tamil</li>
+          <li>Telugu</li>
+        </ul>
+      </div>
+      <div class="skill-card">
+        <div class="head">strengths</div>
+        <ul>
+          <li>Quick learner, adaptable</li>
+          <li>Strong problem-solving</li>
+          <li>Communication &amp; teamwork</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="skills">
+    <div class="prompt"><span class="user">gnanasridhar</span><span class="at">@</span><span class="host">root</span><span class="cmd">:~$ ls -la ./skills/</span></div>
+    <h2 class="sec-title">tech<span class="brk">_</span>stack</h2>
+    <div class="skills-grid">
+      <div class="skill-card">
+        <div class="head">languages</div>
+        <ul><li>C</li><li>Python</li><li>Java</li></ul>
+      </div>
+      <div class="skill-card">
+        <div class="head">web</div>
+        <ul><li>HTML</li><li>CSS</li><li>JavaScript</li></ul>
+      </div>
+      <div class="skill-card">
+        <div class="head">database</div>
+        <ul><li>SQL (basic)</li></ul>
+      </div>
+      <div class="skill-card">
+        <div class="head">tools</div>
+        <ul><li>Git</li><li>VS Code</li><li>MS Office</li></ul>
+      </div>
+      <div class="skill-card">
+        <div class="head">core concepts</div>
+        <ul><li>Data Structures</li><li>Networking</li><li>DBMS</li></ul>
+      </div>
+      <div class="skill-card">
+        <div class="head">certifications</div>
+        <ul><li>Web Development Internship</li><li>Data Science Internship</li><li>Computer Networks Internship</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="experience">
+    <div class="prompt"><span class="user">gnanasridhar</span><span class="at">@</span><span class="host">root</span><span class="cmd">:~$ tail -f ./experience.log</span></div>
+    <h2 class="sec-title">intern<span class="brk">.</span>ships</h2>
+
+    <div class="exp-item">
+      <div class="exp-marker"><div class="node"></div><div class="stem"></div></div>
+      <div>
+        <div class="exp-role">Web Development Intern <span class="exp-tag">[html/css/js]</span></div>
+        <ul>
+          <li>Developed responsive web pages using HTML, CSS, and JavaScript</li>
+          <li>Improved UI/UX for better user interaction</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-marker"><div class="node"></div><div class="stem"></div></div>
+      <div>
+        <div class="exp-role">Data Science Intern <span class="exp-tag">[python/ml]</span></div>
+        <ul>
+          <li>Performed data analysis using Python</li>
+          <li>Learned data visualization and basic machine learning techniques</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="exp-item">
+      <div class="exp-marker"><div class="node"></div><div class="stem"></div></div>
+      <div>
+        <div class="exp-role">Computer Networks Intern <span class="exp-tag">[osi/tcp-ip]</span></div>
+        <ul>
+          <li>Studied OSI model and TCP/IP protocols</li>
+          <li>Gained practical exposure to network configuration</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <div class="prompt"><span class="user">gnanasridhar</span><span class="at">@</span><span class="host">root</span><span class="cmd">:~$ ps -ef | grep projects</span></div>
+    <h2 class="sec-title">pro<span class="brk">/</span>jects</h2>
+
+    <div class="proj">
+      <div class="proj-title">InTraM-WSN — Intelligent Traffic Monitoring</div>
+      <div class="proj-stack">Python · React · Bi-LSTM · Reinforcement Learning · Wireless Sensor Networks</div>
+      <ul>
+        <li>AI-driven traffic management system using Bi-LSTM prediction and RL-based routing</li>
+        <li>Congestion prediction, energy-efficient routing, self-healing fault recovery</li>
+        <li>Higher Packet Delivery Ratio, lower latency, longer network lifetime vs. conventional protocols</li>
+      </ul>
+    </div>
+
+    <div class="proj">
+      <div class="proj-title">Wraptron — UI/UX Website Redesign</div>
+      <div class="proj-stack">Figma · Wireframing · Responsive Design</div>
+      <ul>
+        <li>Redesigned website interfaces to improve user experience and accessibility</li>
+        <li>Created responsive layouts, wireframes, and interactive prototypes</li>
+        <li>Enhanced navigation, usability, and visual consistency across web pages</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="contact" style="border-bottom:none;">
+    <div class="prompt"><span class="user">gnanasridhar</span><span class="at">@</span><span class="host">root</span><span class="cmd">:~$ ./connect.sh --init</span></div>
+    <h2 class="sec-title">get<span class="brk">_</span>in_touch</h2>
+    <div class="term">
+      <div class="term-head">
+        <div class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+        <span style="color:var(--text-dim); font-size:12px;">contact.sh — running</span>
+      </div>
+      <div class="term-body">
+        <div class="row"><span class="k">email</span>&nbsp; &nbsp;→ <a class="v" href="mailto:gnanasridharcse@gmail.com">gnanasridharcse@gmail.com</a></div>
+        <div class="row"><span class="k">phone</span>&nbsp; &nbsp;→ <span class="v">+91 73392 58006</span></div>
+        <div class="row"><span class="k">github</span>&nbsp;&nbsp;→ <a class="v" href="https://github.com/Gnanasridhar27" target="_blank" rel="noopener">github.com/Gnanasridhar27</a></div>
+        <div class="row"><span class="k">linkedin</span>→ <a class="v" href="https://www.linkedin.com/in/gnanasridhar-n" target="_blank" rel="noopener">linkedin.com/in/gnanasridhar-n</a></div>
+        <div class="row"><span class="k">local_time</span>→ <span id="liveclock">--:--:--</span> IST</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">/end_of_file<span class="blink-cursor">_</span> — built with JetBrains Mono, Bebas Neue &amp; Oxanium</div>
+</footer>
+
+<script>
+  // boot sequence
+  document.querySelectorAll('#boot .line').forEach(el=>{
+    el.style.animation = 'fadeIn 0.05s forwards';
+  });
+  setTimeout(()=>{
+    const boot = document.getElementById('boot');
+    boot.style.transition = 'opacity .5s ease';
+    boot.style.opacity = '0';
+    setTimeout(()=>boot.classList.add('done'), 500);
+  }, 1900);
+
+  // typed role text
+  const roles = ["Software Development", "Data Science", "Computer Networking", "Problem Solving"];
+  const typedEl = document.getElementById('typed');
+  let ri=0, ci=0, deleting=false;
+  function typeLoop(){
+    const word = roles[ri];
+    if(!deleting){
+      ci++;
+      typedEl.textContent = word.slice(0,ci);
+      if(ci===word.length){ deleting=true; setTimeout(typeLoop, 1200); return; }
+    } else {
+      ci--;
+      typedEl.textContent = word.slice(0,ci);
+      if(ci===0){ deleting=false; ri=(ri+1)%roles.length; }
+    }
+    setTimeout(typeLoop, deleting?40:70);
+  }
+  typeLoop();
+
+  // uptime counter (session-based, purely decorative)
+  const start = Date.now();
+  function pad(n){return String(n).padStart(2,'0');}
+  function tickUptime(){
+    const diff = Math.floor((Date.now()-start)/1000);
+    const h = Math.floor(diff/3600), m = Math.floor((diff%3600)/60), s = diff%60;
+    document.getElementById('uptime').textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  }
+  setInterval(tickUptime, 1000); tickUptime();
+
+  // live clock (IST)
+  function tickClock(){
+    const now = new Date();
+    const opts = { timeZone:'Asia/Kolkata', hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit' };
+    document.getElementById('liveclock').textContent = new Intl.DateTimeFormat('en-GB', opts).format(now);
+  }
+  setInterval(tickClock, 1000); tickClock();
+</script>
+
+</body>
+</html>
